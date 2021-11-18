@@ -1,9 +1,6 @@
 from l3addr import L3Addr
 from icecream import ic
 
-ic.disable()
-
-
 class RoutingTableEntry:
     def __init__(self, iface_num: int, destaddr: L3Addr, mask_numbits: int, nexthop: L3Addr, is_local: bool):
         self.iface_num = iface_num
@@ -28,9 +25,12 @@ class RoutingTable:
         # Make sure the netaddr passed in is actually a network address -- host part
         # is all 0s.
         # TODO: implement the code for the comment above.
+        netaddr = netaddr.network_part_as_L3Addr(mask_numbits)
 
         # Create a RoutingTableEntry and append to self._entries.
         # TODO: implement the comment above.
+        entry = RoutingTableEntry(iface_num,netaddr,mask_numbits,nexthop,is_local)
+        self._entries.append(entry)
 
     def add_route(self, ifaces: list, netaddr: L3Addr, mask_numbits: int, nexthop: L3Addr):
         '''Add a route. Indicate a local route (no nexthop) by passing L3Addr("0.0.0.0") for nexthop'''
@@ -39,13 +39,23 @@ class RoutingTable:
 
         # TODO: find the iface the nexthop address is accessible through.  raise ValueError if it
         # is not accessible out any interface. Store iface in out_iface.
+        out_iface = None
+        for iface in ifaces:
+            if ( iface.on_same_network(nexthop) ):
+                out_iface = iface
+                break
+        if ( out_iface == None ):
+            raise ValueError
 
         ic(str(out_iface))
         # Make sure the destaddr passed in is actually a network address -- host part
         # is all 0s.
         # TODO: implement, just as you did in previous method.
+        netaddr = netaddr.network_part_as_L3Addr(mask_numbits)
 
         # TODO: Create routing table entry and add to list, similar to previous method.
+        entry = RoutingTableEntry(out_iface.get_number(),netaddr,mask_numbits,nexthop,is_local)
+        self._entries.append(entry)
 
     def __str__(self):
         ret = f"RoutingTable:\n"
@@ -61,6 +71,15 @@ class RoutingTable:
         '''Use longest-prefix-match (LPM) to find and return the best route
         entry for the given dest address'''
         # TODO: return None if no matches (which means no default route)
+        bestRoute = None
+        bestRouteLen = -1
+        for entry in self._entries:
+            if ( entry.destaddr.network_part_as_int(entry.mask_numbits) == dest.network_part_as_int(entry.mask_numbits) and entry.mask_numbits > bestRouteLen ):
+                bestRoute = entry
+                bestRouteLen = entry.mask_numbits
+        if ( bestRoute != None ):
+            ic(bestRoute.iface_num)
+        return bestRoute
 
 
 if __name__ == "__main__":

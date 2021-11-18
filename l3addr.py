@@ -1,9 +1,5 @@
-from icecream import ic
 from utils import maskToHostMask, maskToInt
-
-# Disable debugging output
-ic.disable()
-
+from icecream import ic
 
 class L3Addr:
 
@@ -16,6 +12,9 @@ class L3Addr:
             if len(parts) != 4:
                 raise ValueError("str val must have the form x.y.z.w")
             # TODO: convert parts (list of strings) into one integer value in variable res
+            res = 0
+            for i in range(0,4):
+                res += int(parts[i]) << (3-i)*8
             self._as_int = res
         elif isinstance(val, int):
             if val > 2 ** 32 - 1:
@@ -43,8 +42,13 @@ class L3Addr:
     def network_part_as_L3Addr(self, mask_numbits: int):
         return L3Addr(self.network_part_as_int(mask_numbits))
 
+    def host_part_as_int(self, mask_numbits:int) -> int:
+        mask = maskToHostMask(mask_numbits)
+        return self._as_int & mask
+        
     def host_part_as_L3Addr(self, mask_numbits: int):
         # TODO
+        return L3Addr(self.host_part_as_int(mask_numbits))
 
     def __eq__(self, other):
         return self._as_int == other.as_int()
@@ -54,6 +58,7 @@ class L3Addr:
 
     def is_bcast(self) -> bool:
         # TODO
+        return self.as_str() == "255.255.255.255"
 
 
 if __name__ == "__main__":

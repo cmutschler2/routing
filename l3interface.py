@@ -2,7 +2,6 @@ from l3addr import L3Addr
 from utils import maskToHostMask, maskToInt
 from icecream import ic
 
-
 class L3Interface:
 
     def __init__(self, number: int, addr: str, mask_numbits: int):
@@ -17,11 +16,13 @@ class L3Interface:
 
     def get_netaddr(self) -> L3Addr:
         # TODO
+        return self._addr.network_part_as_L3Addr(self._mask_numbits)
 
     def get_directed_bcast_addr(self) -> L3Addr:
         host_mask = maskToHostMask(self._mask_numbits)
         # host_mask is all 1 bits in the host part -- which is the same as a bcast value!
         # TODO: one missing line here.
+        host_bcast = self._addr.network_part_as_int(self._mask_numbits) + host_mask
         return L3Addr(host_bcast)
 
     def get_mask(self):
@@ -33,13 +34,13 @@ class L3Interface:
     def on_same_network(self, addr: L3Addr) -> bool:
         '''return True if the given addr is on this interface's network.'''
         # TODO
+        return self._addr.network_part_as_int(self._mask_numbits) == addr.network_part_as_int(self._mask_numbits)
 
     def get_addr(self):
         return self._addr
 
     def __str__(self):
         return f"Iface<{self._number}: {self._addr.as_str()}/{self._mask_numbits}>"
-
 
 if __name__ == "__main__":
     iface = L3Interface(1, "10.10.10.2", 8)
